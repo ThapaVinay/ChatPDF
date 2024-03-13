@@ -15,7 +15,7 @@ The application follows these steps to provide responses to your questions:
 
 2. **Text Chunking:** The extracted text is divided into smaller chunks that can be processed effectively.
 
-3. **Language Model:** The application utilizes a language model to generate vector representations (embeddings) of the text chunks.
+3. **Language Model:** The application utilizes a language model to generate vector representations (embeddings) of the text chunks. We are using InstructorEmbedding from Hugging Face.
 
 4. **Similarity Matching:** When you ask a question, the app compares it with the text chunks and identifies the most semantically similar ones.
 
