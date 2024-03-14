@@ -17,9 +17,9 @@ The application follows these steps to provide responses to your questions:
 
 3. **Language Model:** The application utilizes a language model to generate vector representations (embeddings) of the text chunks. We are using InstructorEmbedding from Hugging Face.
 
-4. **Similarity Matching:** When you ask a question, the app compares it with the text chunks and identifies the most semantically similar ones.
+4. **Similarity Matching:** When you ask a question, the app compares it with the text chunks and identifies the most semantically similar ones. We are using retrievel method for it.
 
-5. **Response Generation:** The selected chunks are passed to the language model, which generates a response based on the relevant content of the PDFs.
+5. **Response Generation:** The selected chunks are passed to the language model, which generates a response based on the relevant content of the PDFs. We are using google/flan-t5-xxl model for it.
 
 
 ## Dependencies and Installation
