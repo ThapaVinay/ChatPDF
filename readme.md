@@ -19,7 +19,7 @@ The application follows these steps to provide responses to your questions:
 
 4. **Similarity Matching:** When you ask a question, the app compares it with the text chunks and identifies the most semantically similar ones. We are using retrievel method for it.
 
-5. **Response Generation:** The selected chunks are passed to the language model, which generates a response based on the relevant content of the PDFs. We are using google/flan-t5-xxl model for it.
+5. **Response Generation:** The selected chunks are passed to the language model, which generates a response based on the relevant content of the PDFs. We are using mistralai/Mistral-7B-Instruct-v0.2 model for it.
 
 
 ## Dependencies and Installation

@@ -9,6 +9,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from htmlTemplate import css, bot_template, user_template
 from langchain.llms import HuggingFaceHub
+import re
 
 def get_pdf_text(pdf_docs):
     text = ""
@@ -39,7 +40,7 @@ def get_vectorstore(text_chunks):
 
 def get_conversation_chain(vectorstore):
     
-    llm = HuggingFaceHub( repo_id="google/flan-t5-xxl", model_kwargs={"temperature": 0.5, "max_length": 64, "max_new_tokens":512})
+    llm = HuggingFaceHub( repo_id="mistralai/Mistral-7B-Instruct-v0.2", model_kwargs={"temperature": 0.5, "max_length": 64, "max_new_tokens":512})
 
     memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
     
@@ -51,16 +52,15 @@ def get_conversation_chain(vectorstore):
     return conversation_chain
 
 def handle_userinput(user_question):
-    response = st.session_state.conversation({'question': user_question})
-    st.session_state.chat_history = response['chat_history']
+    response = st.session_state.conversation({'question': user_question, 'chat_history': []})
+    st.session_state.chat_history = []
+    st.write(response['answer'])
+    match = re.findall(r'\nHelpful Answer: (.*)', response['answer'])
 
-    for i, message in enumerate(st.session_state.chat_history):
-        if i % 2 == 0:
-            st.write(user_template.replace(
-                "{{MSG}}", message.content), unsafe_allow_html=True)
-        else:
-            st.write(bot_template.replace(
-                "{{MSG}}", message.content), unsafe_allow_html=True)
+    st.write(user_template.replace(
+                "{{MSG}}", user_question), unsafe_allow_html=True)
+    st.write(bot_template.replace(
+                "{{MSG}}", str([item for item in match])), unsafe_allow_html=True)
 
 def main():
     load_dotenv()
