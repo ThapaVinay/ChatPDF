@@ -5,12 +5,12 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from htmlTemplate import css, bot_template, user_template
 from langchain.llms import HuggingFaceHub
 import re
 
+# get the pdf document
 def get_pdf_text(pdf_docs):
     text = ""
     for pdf in pdf_docs:
@@ -20,6 +20,7 @@ def get_pdf_text(pdf_docs):
             text += page.extract_text()
     return text
 
+# break the text into chunks
 def get_text_chunks(text):
     text_splitter = CharacterTextSplitter(
         separator="\n",
@@ -31,30 +32,27 @@ def get_text_chunks(text):
     chunks = text_splitter.split_text(text)
     return chunks
 
+# get the vector embeddings
 def get_vectorstore(text_chunks):
     inference_api_key = os.getenv("HUGGINGFACEHUB_API_TOKEN")
     embeddings = HuggingFaceInferenceAPIEmbeddings(api_key = inference_api_key, model_name="hkunlp/instructor-xl")
-
     vectorstore = FAISS.from_texts(texts = text_chunks, embedding = embeddings)
     return vectorstore
 
+# make the converstion chain
 def get_conversation_chain(vectorstore):
     
     llm = HuggingFaceHub( repo_id="mistralai/Mistral-7B-Instruct-v0.2", model_kwargs={"temperature": 0.5, "max_length": 64, "max_new_tokens":512})
-
-    memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-    
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=vectorstore.as_retriever(),
-        memory=memory
     )
     return conversation_chain
 
+# handle the user input
 def handle_userinput(user_question):
     response = st.session_state.conversation({'question': user_question, 'chat_history': []})
-    st.session_state.chat_history = []
-    st.write(response['answer'])
+    
     match = re.findall(r'\nHelpful Answer: (.*)', response['answer'])
 
     st.write(user_template.replace(
@@ -62,19 +60,17 @@ def handle_userinput(user_question):
     st.write(bot_template.replace(
                 "{{MSG}}", str([item for item in match])), unsafe_allow_html=True)
 
+# main function
 def main():
     load_dotenv()
-    st.set_page_config(page_title="ChatPDFs", page_icon=":books:")
+    st.set_page_config(page_title="ChatBot", page_icon=":rockets:")
     
     st.write(css, unsafe_allow_html=True)
 
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = None
-
-    st.header("ChatPDFs :books:")
+    st.header("ChatBot 😁")
     
     user_question = st.text_input("Ask a question about your document:")
     if user_question:
