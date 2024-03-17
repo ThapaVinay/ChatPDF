@@ -24,19 +24,26 @@ def get_pdf_text(pdf_docs):
 def get_text_chunks(text):
     text_splitter = CharacterTextSplitter(
         separator="\n",
-        chunk_size=1000,
-        chunk_overlap=200,
+        chunk_size=1500,
+        chunk_overlap=100,
         length_function=len
     )
 
     chunks = text_splitter.split_text(text)
     return chunks
 
+# preprocess the text
+def preprocess(raw_text):
+    cleaned_text = re.sub(r'\s+', ' ', raw_text)
+    return cleaned_text
+
 # get the vector embeddings
 def get_vectorstore(text_chunks):
     inference_api_key = os.getenv("HUGGINGFACEHUB_API_TOKEN")
     embeddings = HuggingFaceInferenceAPIEmbeddings(api_key = inference_api_key, model_name="hkunlp/instructor-xl")
-    vectorstore = FAISS.from_texts(texts = text_chunks, embedding = embeddings)
+    vectorstore = None
+    if embeddings is not None:
+        vectorstore = FAISS.from_texts(texts = text_chunks, embedding = embeddings)
     return vectorstore
 
 # make the converstion chain
@@ -45,7 +52,8 @@ def get_conversation_chain(vectorstore):
     llm = HuggingFaceHub( repo_id="mistralai/Mistral-7B-Instruct-v0.2", model_kwargs={"temperature": 0.5, "max_length": 64, "max_new_tokens":512})
     conversation_chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
-        retriever=vectorstore.as_retriever(),
+        chain_type='stuff',
+        retriever=vectorstore.as_retriever(search_kwargs={"k": 1}),
     )
     return conversation_chain
 
@@ -58,12 +66,12 @@ def handle_userinput(user_question):
     st.write(user_template.replace(
                 "{{MSG}}", user_question), unsafe_allow_html=True)
     st.write(bot_template.replace(
-                "{{MSG}}", str([item for item in match])), unsafe_allow_html=True)
+                "{{MSG}}", " ".join(match)), unsafe_allow_html=True)
 
 # main function
 def main():
     load_dotenv()
-    st.set_page_config(page_title="ChatBot", page_icon=":rockets:")
+    st.set_page_config(page_title="ChatBot", page_icon=":rocket:")
     
     st.write(css, unsafe_allow_html=True)
 
@@ -85,8 +93,11 @@ def main():
                 # get pdf text
                 raw_text = get_pdf_text(pdf_docs)
 
+                # preproces the text to remove punctuations
+                text = preprocess(raw_text)
+
                 # get the text chunks
-                text_chunks = get_text_chunks(raw_text)
+                text_chunks = get_text_chunks(text)
 
                 # create vector store
                 vectorstore = get_vectorstore(text_chunks)
